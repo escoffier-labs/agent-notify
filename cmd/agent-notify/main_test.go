@@ -12,11 +12,23 @@ import (
 	"testing"
 )
 
+var conventionalChannelEnv = []string{
+	"DISCORD_WEBHOOK_URL",
+	"TELEGRAM_BOT_TOKEN",
+	"TELEGRAM_CHAT_ID",
+	"SIGNAL_CLI_URL",
+	"SIGNAL_FROM",
+	"SIGNAL_TO",
+}
+
 // runMain calls the main package's run() function with the given args,
 // stdin, and env vars, returning the exit code, stdout, and stderr.
 func runMain(t *testing.T, args []string, stdin string, env map[string]string) (int, string, string) {
 	t.Helper()
 	t.Setenv("HOME", t.TempDir())
+	for _, name := range conventionalChannelEnv {
+		t.Setenv(name, "")
+	}
 	for k, v := range env {
 		t.Setenv(k, v)
 	}
@@ -24,6 +36,31 @@ func runMain(t *testing.T, args []string, stdin string, env map[string]string) (
 	var stdout, stderr bytes.Buffer
 	code := run(args, stdinR, &stdout, &stderr)
 	return code, stdout.String(), stderr.String()
+}
+
+func TestRun_ClearsAmbientChannelEnvironment(t *testing.T) {
+	t.Setenv("SIGNAL_CLI_URL", "http://127.0.0.1:1")
+	t.Setenv("SIGNAL_FROM", "+15550000001")
+	t.Setenv("SIGNAL_TO", "+15550000002")
+
+	var hits int
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		hits++
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer srv.Close()
+
+	code, _, stderr := runMain(t,
+		[]string{"agent-notify", "isolated"},
+		"",
+		map[string]string{"DISCORD_WEBHOOK_URL": srv.URL},
+	)
+	if code != 0 {
+		t.Fatalf("exit = %d, stderr = %s", code, stderr)
+	}
+	if hits != 1 {
+		t.Fatalf("discord hits = %d, want 1", hits)
+	}
 }
 
 func TestRun_PlainStringToDiscord_ExitsZero(t *testing.T) {
@@ -266,11 +303,19 @@ func TestRun_DoctorJSONReportsMissingConfigAsUnconfigured(t *testing.T) {
 }
 
 func TestRun_DoctorHelpExitsZeroWithoutReadingConfig(t *testing.T) {
-	missing := filepath.Join(t.TempDir(), "must-not-be-created.toml")
+	home := t.TempDir()
+	configDir := filepath.Join(home, ".config", "agent-notify")
+	if err := os.MkdirAll(configDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	configPath := filepath.Join(configDir, "config.toml")
+	if err := os.WriteFile(configPath, []byte("not valid toml = ["), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	code, stdout, stderr := runMain(t,
-		[]string{"agent-notify", "doctor", "--help", "--config", missing},
+		[]string{"agent-notify", "doctor", "--help"},
 		"",
-		nil,
+		map[string]string{"HOME": home},
 	)
 	if code != 0 {
 		t.Fatalf("exit = %d, want 0 (stdout=%q stderr=%q)", code, stdout, stderr)
@@ -281,8 +326,12 @@ func TestRun_DoctorHelpExitsZeroWithoutReadingConfig(t *testing.T) {
 			t.Fatalf("doctor --help missing %s: %q", flag, help)
 		}
 	}
-	if _, err := os.Stat(missing); !os.IsNotExist(err) {
-		t.Fatalf("doctor --help touched config path %s: %v", missing, err)
+	body, err := os.ReadFile(configPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(body) != "not valid toml = [" {
+		t.Fatalf("doctor --help mutated config: %q", body)
 	}
 }
 
