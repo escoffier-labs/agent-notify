@@ -16,6 +16,7 @@ import (
 // stdin, and env vars, returning the exit code, stdout, and stderr.
 func runMain(t *testing.T, args []string, stdin string, env map[string]string) (int, string, string) {
 	t.Helper()
+	t.Setenv("HOME", t.TempDir())
 	for k, v := range env {
 		t.Setenv(k, v)
 	}
@@ -261,6 +262,27 @@ func TestRun_DoctorJSONReportsMissingConfigAsUnconfigured(t *testing.T) {
 	}
 	if payload["fail_count"].(float64) == 0 {
 		t.Fatalf("expected failures, got %#v", payload)
+	}
+}
+
+func TestRun_DoctorHelpExitsZeroWithoutReadingConfig(t *testing.T) {
+	missing := filepath.Join(t.TempDir(), "must-not-be-created.toml")
+	code, stdout, stderr := runMain(t,
+		[]string{"agent-notify", "doctor", "--help", "--config", missing},
+		"",
+		nil,
+	)
+	if code != 0 {
+		t.Fatalf("exit = %d, want 0 (stdout=%q stderr=%q)", code, stdout, stderr)
+	}
+	help := stdout + stderr
+	for _, flag := range []string{"--json", "--skip-network"} {
+		if !strings.Contains(help, flag) {
+			t.Fatalf("doctor --help missing %s: %q", flag, help)
+		}
+	}
+	if _, err := os.Stat(missing); !os.IsNotExist(err) {
+		t.Fatalf("doctor --help touched config path %s: %v", missing, err)
 	}
 }
 

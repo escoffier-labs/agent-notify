@@ -216,12 +216,19 @@ func runStatus(args []string, stdout, stderr io.Writer) int {
 func runDoctor(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("doctor", flag.ContinueOnError)
 	fs.SetOutput(stderr)
+	fs.Usage = func() {
+		fmt.Fprintln(stderr, "usage: agent-notify doctor [--config path] [--profile name] [--skip names] [--skip-network] [--json]")
+		fs.PrintDefaults()
+	}
 	configPath := fs.String("config", defaultConfigPath(), "path to TOML config file")
 	profileFlag := fs.String("profile", "", "profile name from config")
 	skipFlag := fs.String("skip", "", "comma-separated channel names to skip from resolved list")
 	skipNetwork := fs.Bool("skip-network", true, "skip live network sends; reserved for future smoke checks")
 	jsonOut := fs.Bool("json", false, "machine-readable JSON output")
 	if err := fs.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			return exitOK
+		}
 		return exitConfig
 	}
 

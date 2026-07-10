@@ -177,6 +177,11 @@ channels:   [telegram-personal discord-main]
 
 Add `--json` to either command for machine-readable output you can pipe into a script.
 
+The root `station.json` publishes the no-send doctor and version surfaces to
+Brigade. Brigade verifies the doctor flags through `doctor --help`, which exits
+before config inspection, and uses `doctor --json --skip-network` only as the
+declared operational contract.
+
 ## Routing precedence
 
 1. `--to <names>` (explicit, comma-separated) - overrides everything else.

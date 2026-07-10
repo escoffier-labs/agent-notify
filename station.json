@@ -1,0 +1,32 @@
+{
+  "schema": "brigade.station.v1",
+  "name": "agent-notify",
+  "station": "notifications",
+  "summary": "privacy-first operator notifications for local agent workflows",
+  "lifecycle": "active",
+  "tools": [
+    {
+      "name": "agent-notify",
+      "kind": "executable",
+      "command": "agent-notify",
+      "summary": "local notification dispatcher for Discord, Telegram, and Signal",
+      "install": ["go", "install", "github.com/escoffier-labs/agent-notify/cmd/agent-notify@latest"],
+      "surfaces": [
+        {
+          "kind": "doctor-json",
+          "command": ["agent-notify", "doctor", "--json", "--skip-network"],
+          "read_only": true,
+          "timeout_seconds": 10,
+          "probe": ["agent-notify", "doctor", "--help"],
+          "probe_contains": ["--json", "--skip-network"]
+        },
+        {
+          "kind": "verify-exit",
+          "command": ["agent-notify", "version", "--json"],
+          "read_only": true,
+          "timeout_seconds": 10
+        }
+      ]
+    }
+  ]
+}
