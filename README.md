@@ -25,13 +25,11 @@
   <img src="https://shieldcn.dev/badge/license-MIT-green.svg" alt="MIT license">
 </p>
 
-## Install
+## Migration notice
 
-```bash
-go install github.com/escoffier-labs/agent-notify/cmd/agent-notify@latest
-# Brigade station
-brigade add notifications
-```
+Phase 4: source development has moved into the Brigade monorepo at `stations/notify`. The CLI binary is still named `agent-notify`. If you use Brigade, install or configure it with `brigade setup` and `brigade add notifications`. Planning and status integration stay free; sending a notification remains opt-in.
+
+This standalone repository stays available during the transition. It will remain here until the first Brigade stable release that includes agent-notify passes acceptance. That release does not exist yet, and this repository is not archived.
 
 ## What it does
 
@@ -48,19 +46,30 @@ Generated from [`docs/assets/workflows/routing.json`](docs/assets/workflows/rout
 
 ## Install
 
+### Brigade
+
+```bash
+brigade setup
+brigade add notifications
+```
+
+### Standalone (current and legacy during transition)
+
 Install the latest tagged release with `go install`:
 
 ```bash
 go install github.com/escoffier-labs/agent-notify/cmd/agent-notify@latest
 ```
 
-Or build from source:
+Or build from source in this repository:
 
 ```bash
 git clone https://github.com/escoffier-labs/agent-notify.git
 cd agent-notify
 make install   # builds and copies to ~/bin/agent-notify
 ```
+
+New source development happens in the Brigade monorepo at `stations/notify`.
 
 Prebuilt binaries (linux, macOS, windows for amd64 and arm64) plus a `checksums.txt` are attached to each [release](https://github.com/escoffier-labs/agent-notify/releases). Download the archive for your platform, verify the checksum, extract, and drop the binary in `~/bin/` or `/usr/local/bin/`:
 
