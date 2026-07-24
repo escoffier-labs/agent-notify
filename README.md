@@ -25,11 +25,8 @@
   <img src="https://shieldcn.dev/badge/license-MIT-green.svg" alt="MIT license">
 </p>
 
-## Migration notice
-
-Phase 4: source development has moved into the Brigade monorepo at `stations/notify`. The CLI binary is still named `agent-notify`. If you use Brigade, install or configure it with `brigade setup` and `brigade add notifications`. Planning and status integration stay free; sending a notification remains opt-in.
-
-This standalone repository stays available during the transition. It will remain here until the first Brigade stable release that includes agent-notify passes acceptance. That release does not exist yet, and this repository is not archived.
+> [!IMPORTANT]
+> **Inside Brigade:** agent-notify lives in [escoffier-labs/brigade](https://github.com/escoffier-labs/brigade) (source under `stations/notify`). Install `brigade-cli` and run `brigade setup`, which installs the managed `agent-notify` binary and records its absolute path. Use `brigade add notifications` for wiring plans. This standalone repository remains available during the transition; report issues on the [Brigade tracker](https://github.com/escoffier-labs/brigade/issues).
 
 ## What it does
 
@@ -49,6 +46,7 @@ Generated from [`docs/assets/workflows/routing.json`](docs/assets/workflows/rout
 ### Brigade
 
 ```bash
+pipx install brigade-cli
 brigade setup
 brigade add notifications
 ```
