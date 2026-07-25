@@ -117,7 +117,7 @@ agent-notify init
 Or create `~/.config/agent-notify/config.toml` manually:
 
 ```toml
-[channels.tg-personal]
+[channels.telegram-personal]
 type = "telegram"
 bot_token_env = "TELEGRAM_BOT_TOKEN"
 chat_id_env   = "TELEGRAM_CHAT_ID"
@@ -133,11 +133,11 @@ from_env = "SIGNAL_FROM"
 to_env   = "SIGNAL_TO"
 
 [profiles.agent-stop]
-channels = ["tg-personal", "discord-main"]
+channels = ["telegram-personal", "discord-main"]
 default  = true
 
 [profiles.error]
-channels = ["tg-personal", "discord-main", "signal-personal"]
+channels = ["telegram-personal", "discord-main", "signal-personal"]
 prefix   = "🚨 "
 ```
 
@@ -200,7 +200,7 @@ Add `--json` to either command for machine-readable output you can pipe into a s
 ```bash
 agent-notify "build done"                              # default profile or all channels
 agent-notify --profile error "5 critical alerts"       # error profile
-agent-notify --to tg-personal "ack"                    # only Telegram
+agent-notify --to telegram-personal "ack"              # only Telegram
 agent-notify --profile error --skip signal "minor"     # error profile minus Signal
 ```
 

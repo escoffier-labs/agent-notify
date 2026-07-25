@@ -318,6 +318,20 @@ func TestRun_InitWritesSampleConfig(t *testing.T) {
 	if !strings.Contains(string(body), "[profiles.agent-stop]") {
 		t.Fatalf("sample config missing agent-stop profile:\n%s", body)
 	}
+
+	readme, err := os.ReadFile(filepath.Join("..", "..", "README.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, channel := range []string{"telegram-personal", "discord-main", "signal-personal"} {
+		section := "[channels." + channel + "]"
+		if !strings.Contains(string(body), section) || !strings.Contains(string(readme), section) {
+			t.Errorf("generated config and README must both contain %q", section)
+		}
+	}
+	if strings.Contains(string(readme), "tg-personal") {
+		t.Error("README still references stale tg-personal channel name")
+	}
 }
 
 func TestRun_DoctorJSONReportsMissingConfigAsUnconfigured(t *testing.T) {
