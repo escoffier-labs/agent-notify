@@ -319,19 +319,45 @@ func TestRun_InitWritesSampleConfig(t *testing.T) {
 		t.Fatalf("sample config missing agent-stop profile:\n%s", body)
 	}
 
+}
+
+// The README documents a config a user could write by hand, so every channel and
+// profile section the generated sample defines has to appear there under the same
+// name. Section names are read out of the sample rather than hardcoded, so adding
+// a channel to sampleConfig without documenting it fails here too.
+func TestREADMEDocumentsEverySampleConfigSection(t *testing.T) {
 	readme, err := os.ReadFile(filepath.Join("..", "..", "README.md"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, channel := range []string{"telegram-personal", "discord-main", "signal-personal"} {
-		section := "[channels." + channel + "]"
-		if !strings.Contains(string(body), section) || !strings.Contains(string(readme), section) {
-			t.Errorf("generated config and README must both contain %q", section)
+
+	sections := sectionHeaders(sampleConfig(), "channels", "profiles")
+	if len(sections) == 0 {
+		t.Fatal("no channel or profile sections found in sample config")
+	}
+	for _, section := range sections {
+		if !strings.Contains(string(readme), section) {
+			t.Errorf("README does not document %q from the generated sample config", section)
 		}
 	}
-	if strings.Contains(string(readme), "tg-personal") {
-		t.Error("README still references stale tg-personal channel name")
+}
+
+// sectionHeaders returns the "[prefix.name]" TOML headers in cfg for the given prefixes.
+func sectionHeaders(cfg string, prefixes ...string) []string {
+	var out []string
+	for _, line := range strings.Split(cfg, "\n") {
+		line = strings.TrimSpace(line)
+		if !strings.HasPrefix(line, "[") || !strings.HasSuffix(line, "]") {
+			continue
+		}
+		for _, prefix := range prefixes {
+			if strings.HasPrefix(line, "["+prefix+".") {
+				out = append(out, line)
+				break
+			}
+		}
 	}
+	return out
 }
 
 func TestRun_DoctorJSONReportsMissingConfigAsUnconfigured(t *testing.T) {
